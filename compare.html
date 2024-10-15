@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Comparison</title>
+  <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      .compare-texts {
+        text-align: center;
+      }
+      .highlight {
+        background-color: #4141c9;
+        color: white;
+      }
+      .text-container {
+        display: flex;
+        gap: 40px;
+        width: 100%;
+        padding: 20px;
+      }
+      .editable {
+        width: 100%;
+        height: 500px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: hidden;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background-color: white;
+        color: black;
+        font-family: monospace;
+        border-radius: 10px;
+      }
+      .editable:focus {
+        outline: none;
+      }
+      #text1[data-placeholder-1]:empty:before {
+        content: attr(data-placeholder-1);
+        color: #aaa;
+        position: absolute;
+        top: 190px;
+        left: 40px;
+        pointer-events: none;
+      }
+      #text2[data-placeholder-2]:empty:before {
+        content: attr(data-placeholder-2);
+        color: #aaa;
+        position: absolute;
+        top: 190px;
+        left: 920px;
+        pointer-events: none;
+      }
+      .textarea-wrapper {
+        width: 50%;
+      }
+      .button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      button {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        background-color: #4141c9;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+      }
+      .arrow-down {
+        cursor: pointer;
+        color: #4141c9;
+        font-size: 24px;
+        display: none; /* Initially hidden */
+      }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="compare-texts">Compare Texts</h1>
+    <div class="button-container">
+      <button onclick="compareTexts()">Compare</button>
+    </div>
+    <div id="message-div"></div>
+    <div class="text-container">
+      <div class="textarea-wrapper">
+        <div id="text1" class="editable" contenteditable="true" data-placeholder-1="Insert a version of the text here."></div>
+      </div>
+      <a id="arrow-down" class="arrow-down">&#x2193;</a>
+      <div class="textarea-wrapper">
+        <div id="text2" class="editable" contenteditable="true" data-placeholder-2="Insert another version of the text here."></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('text1').addEventListener('paste', function(e) {
+      e.preventDefault();
+      var text = (e.clipboardData || window.clipboardData).getData('text');
+      document.execCommand('insertText', false, text);
+    });
+
+    document.getElementById('text2').addEventListener('paste', function(e) {
+      e.preventDefault();
+      var text = (e.clipboardData || window.clipboardData).getData('text');
+      document.execCommand('insertText', false, text);
+    });
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function highlightDifferences(line1, line2) {
+      function findLCS(s1, s2) {
+        const lengths = Array(s1.length + 1).fill(null).map(() => Array(s2.length + 1).fill(0));
+        for (let i = 1; i <= s1.length; i++) {
+          for (let j = 1; j <= s2.length; j++) {
+            if (s1[i - 1] === s2[j - 1]) {
+              lengths[i][j] = lengths[i - 1][j - 1] + 1;
+            } else {
+              lengths[i][j] = Math.max(lengths[i - 1][j], lengths[i][j - 1]);
+            }
+          }
+        }
+        let lcs = '';
+        let x = s1.length;
+        let y = s2.length;
+        while (x !== 0 && y !== 0) {
+          if (lengths[x][y] === lengths[x - 1][y]) {
+            x--;
+          } else if (lengths[x][y] === lengths[x][y - 1]) {
+            y--;
+          } else {
+            lcs = s1[x - 1] + lcs;
+            x--;
+            y--;
+          }
+        }
+        return lcs;
+      }
+
+      const lcs = findLCS(line1, line2);
+      let highlightedLine1 = '';
+      let highlightedLine2 = '';
+      let i = 0, j = 0, k = 0;
+
+      while (i < line1.length || j < line2.length) {
+        if (k < lcs.length && line1[i] === lcs[k] && line2[j] === lcs[k]) {
+          highlightedLine1 += escapeHtml(line1[i]);
+          highlightedLine2 += escapeHtml(line2[j]);
+          i++;
+          j++;
+          k++;
+        } else {
+          if (i < line1.length && (k >= lcs.length || line1[i] !== lcs[k])) {
+            highlightedLine1 += `<span class="highlight">${escapeHtml(line1[i])}</span>`;
+            i++;
+          }
+          if (j < line2.length && (k >= lcs.length || line2[j] !== lcs[k])) {
+            highlightedLine2 += `<span class="highlight">${escapeHtml(line2[j])}</span>`;
+            j++;
+          }
+        }
+      }
+
+      return { highlightedLine1, highlightedLine2 };
+    }
+
+    function compareTexts() {
+        const text1Div = document.getElementById('text1');
+        const text2Div = document.getElementById('text2');
+        const messageDiv = document.getElementById('message-div');
+        const text1 = text1Div.innerText;
+        const text2 = text2Div.innerText;
+
+        const lines1 = text1.split('\n');
+        const lines2 = text2.split('\n');
+        const newLines1 = []
+        const newLines2 = []
+
+        let highlightedText1 = '';
+        let highlightedText2 = '';
+        let isDifferent = false;
+        let firstDifferenceLine = null;
+        const maxLength = Math.max(lines1.length, lines2.length);
+
+        const hash1 = {};
+        const hash2 = {};
+        for (let i = 0; i < lines1.length; i++) {
+          hash1[lines1[i]] = i;
+        }
+        for (let i = 0; i < lines2.length; i++) {
+          hash2[lines2[i]] = i;
+        }
+
+        if (lines1.length > lines2.length) {
+          for (let i = 0; i < lines1.length; i++) {
+            newLines1.push(lines1[i]);
+
+            if (typeof hash2[lines1[i]] === 'number') {
+              newLines2.push(lines1[i]);
+            } else {
+              newLines2.push('');
+            }
+          }
+        }
+        if (lines1.length < lines2.length) {
+          for (let i = 0; i < lines2.length; i++) {
+            newLines2.push(lines2[i]);
+
+            if (typeof hash1[lines2[i]] === 'number') {
+              newLines1.push(lines2[i]);
+            } else {
+              newLines1.push('');
+            }
+          }
+        }
+        if (lines1.length === lines2.length) {
+          for (let i = 0; i < lines1.length; i++) {
+            newLines1.push(lines1[i]);
+            newLines2.push(lines2[i]);
+          }
+        }
+
+        for (let i = 0; i < maxLength; i++) {
+          const line1 = newLines1[i] || '';
+          const line2 = newLines2[i] || '';
+          const lineNumber = i + 1; // Line number starts from 1
+
+          if (line1 !== line2) {
+            isDifferent = true;
+            if (firstDifferenceLine === null) {
+              firstDifferenceLine = lineNumber;
+            }
+            const { highlightedLine1, highlightedLine2 } = highlightDifferences(line1, line2);
+            highlightedText1 += `<span class="highlight">${lineNumber}</span>` + ': ' + highlightedLine1 + '\n';
+            highlightedText2 += `<span class="highlight">${lineNumber}</span>` + ': ' + highlightedLine2 + '\n';
+          } else {
+            highlightedText1 += lineNumber + ': ' + escapeHtml(line1) + '\n';
+            highlightedText2 += lineNumber + ': ' + escapeHtml(line2) + '\n';
+
+          }
+        }
+
+        text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
+        text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
+
+        text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
+        text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
+
+        text1Div.contentEditable = 'false';
+        text2Div.contentEditable = 'false';
+
+        // const originalTextDiv = document.createElement('div');
+        // originalTextDiv.innerHTML = `
+        //   <h3>Original Texts</h3>
+        //   <p>Text 1:</p>
+        //   <pre>${escapeHtml(lines1.join('\n'))}</pre>
+        //   <p>Text 2:</p>
+        //   <pre>${escapeHtml(lines2.join('\n'))}</pre>
+        // `;
+        // document.body.appendChild(originalTextDiv);
+
+        if (isDifferent) {
+          messageDiv.textContent = 'The texts are different.';
+          document.getElementById('arrow-down').style.display = 'inline'; // Show the arrow
+          document.getElementById('arrow-down').href = `#line-${firstDifferenceLine}`; // Set the href to the first difference line
+        } else {
+          messageDiv.textContent = 'The texts are the same.';
+        }
+      }
+  </script>
+
+</body>
+</html>
