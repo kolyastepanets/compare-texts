@@ -15,6 +15,7 @@
         flex-direction: column;
         align-items: center;
         width: 100%;
+        position: relative;
       }
       .compare-texts {
         text-align: center;
@@ -25,7 +26,7 @@
       }
       .text-container {
         display: flex;
-        gap: 40px;
+        /* gap: 40px; */
         width: 100%;
         padding: 20px;
       }
@@ -34,7 +35,7 @@
         height: 500px;
         border: 1px solid #ccc;
         padding: 10px;
-        overflow-y: hidden;
+        overflow-y: auto;
         white-space: pre-wrap;
         word-wrap: break-word;
         background-color: white;
@@ -63,6 +64,7 @@
       }
       .textarea-wrapper {
         width: 50%;
+        padding: 20px;
       }
       .button-container {
         display: flex;
@@ -83,7 +85,19 @@
         cursor: pointer;
         color: #4141c9;
         font-size: 24px;
-        display: none; /* Initially hidden */
+        display: none;
+        position: absolute;
+        top: 232px;
+        left: 868px;
+      }
+      .arrow-up {
+        cursor: pointer;
+        color: #4141c9;
+        font-size: 24px;
+        display: none;
+        position: absolute;
+        top: 2687px;
+        left: 868px;
       }
   </style>
 </head>
@@ -252,8 +266,9 @@
               firstDifferenceLine = lineNumber;
             }
             const { highlightedLine1, highlightedLine2 } = highlightDifferences(line1, line2);
-            highlightedText1 += `<span class="highlight">${lineNumber}</span>` + ': ' + highlightedLine1 + '\n';
-            highlightedText2 += `<span class="highlight">${lineNumber}</span>` + ': ' + highlightedLine2 + '\n';
+            highlightedText1 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ' + highlightedLine1 + '\n';
+            highlightedText2 += `<a id="arrow-up" class="arrow-up">&#x2191;</a>`
+            highlightedText2 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ' + highlightedLine2 + '\n';
           } else {
             highlightedText1 += lineNumber + ': ' + escapeHtml(line1) + '\n';
             highlightedText2 += lineNumber + ': ' + escapeHtml(line2) + '\n';
@@ -266,6 +281,9 @@
 
         text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
         text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
+
+        text1Div.style.height = text1Div.scrollHeight + 'px';
+        text2Div.style.height = text2Div.scrollHeight + 'px';
 
         text1Div.contentEditable = 'false';
         text2Div.contentEditable = 'false';
@@ -283,7 +301,17 @@
         if (isDifferent) {
           messageDiv.textContent = 'The texts are different.';
           document.getElementById('arrow-down').style.display = 'inline'; // Show the arrow
-          document.getElementById('arrow-down').href = `#line-${firstDifferenceLine}`; // Set the href to the first difference line
+          document.getElementById('arrow-up').style.display = 'inline'; // Show the arrow
+          document.getElementById('arrow-up').addEventListener('click', function() {
+            document.getElementById("arrow-down").scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+
+          document.getElementById('arrow-down').addEventListener('click', function() {
+            const firstDifferenceElement = document.getElementById(`line-${firstDifferenceLine}`);
+            if (firstDifferenceElement) {
+              firstDifferenceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
         } else {
           messageDiv.textContent = 'The texts are the same.';
         }
