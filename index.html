@@ -19,10 +19,11 @@
       <div id="text2" class="editable" contenteditable="true" data-placeholder-2="Insert another version of the text here."></div>
     </div>
     <div id="original-texts-container" class="original-texts-container" style="display: none;">
-      <textarea id="original-text1" class="original-text" readonly></textarea>
+      <textarea id="original-text1" class="original-text"></textarea>
       <div class="spacer"></div>
-      <textarea id="original-text2" class="original-text" readonly></textarea>
+      <textarea id="original-text2" class="original-text"></textarea>
     </div>
+    <button id="clear-all-btn" onclick="clearAll()" style="display: none;">Clear All</button>
   </div>
 
   <script>
@@ -106,113 +107,160 @@
     }
 
     function compareTexts() {
-        const text1Div = document.getElementById('text1');
-        const text2Div = document.getElementById('text2');
-        const messageDiv = document.getElementById('message-div');
-        const text1 = text1Div.innerText;
-        const text2 = text2Div.innerText;
+      const text1Div = document.getElementById('text1');
+      const text2Div = document.getElementById('text2');
+      const messageDiv = document.getElementById('message-div');
+      const originalText1Input = document.getElementById('original-text1');
+      const originalText2Input = document.getElementById('original-text2');
 
-        // Store original texts in the inputs
-        document.getElementById('original-text1').value = text1;
-        document.getElementById('original-text2').value = text2;
-        document.getElementById('original-texts-container').style.display = 'flex';
+      const text1 = originalText1Input.value || text1Div.innerText;
+      const text2 = originalText2Input.value || text2Div.innerText;
+      messageDiv.textContent = ''; // Clear previous messages
 
-        const lines1 = text1.split('\n');
-        const lines2 = text2.split('\n');
-        const newLines1 = []
-        const newLines2 = []
+      if (!originalText1Input.value) {
+        originalText1Input.value = text1;
+      }
+      if (!originalText2Input.value) {
+        originalText2Input.value = text2;
+      }
+      document.getElementById('original-texts-container').style.display = 'flex';
 
-        let highlightedText1 = '';
-        let highlightedText2 = '';
-        let isDifferent = false;
-        let firstDifferenceLine = null;
-        const maxLength = Math.max(lines1.length, lines2.length);
+      const lines1 = text1.split('\n');
+      const lines2 = text2.split('\n');
+      const newLines1 = []
+      const newLines2 = []
 
-        const hash1 = {};
-        const hash2 = {};
+      let highlightedText1 = '';
+      let highlightedText2 = '';
+      let isDifferent = false;
+      let firstDifferenceLine = null;
+      const maxLength = Math.max(lines1.length, lines2.length);
+
+      const hash1 = {};
+      const hash2 = {};
+      for (let i = 0; i < lines1.length; i++) {
+        hash1[lines1[i]] = i;
+      }
+      for (let i = 0; i < lines2.length; i++) {
+        hash2[lines2[i]] = i;
+      }
+
+      if (lines1.length > lines2.length) {
         for (let i = 0; i < lines1.length; i++) {
-          hash1[lines1[i]] = i;
-        }
-        for (let i = 0; i < lines2.length; i++) {
-          hash2[lines2[i]] = i;
-        }
+          newLines1.push(lines1[i]);
 
-        if (lines1.length > lines2.length) {
-          for (let i = 0; i < lines1.length; i++) {
-            newLines1.push(lines1[i]);
-
-            if (typeof hash2[lines1[i]] === 'number') {
-              newLines2.push(lines1[i]);
-            } else {
-              newLines2.push('');
-            }
-          }
-        }
-        if (lines1.length < lines2.length) {
-          for (let i = 0; i < lines2.length; i++) {
-            newLines2.push(lines2[i]);
-
-            if (typeof hash1[lines2[i]] === 'number') {
-              newLines1.push(lines2[i]);
-            } else {
-              newLines1.push('');
-            }
-          }
-        }
-        if (lines1.length === lines2.length) {
-          for (let i = 0; i < lines1.length; i++) {
-            newLines1.push(lines1[i]);
-            newLines2.push(lines2[i]);
-          }
-        }
-
-        for (let i = 0; i < maxLength; i++) {
-          const line1 = newLines1[i] || '';
-          const line2 = newLines2[i] || '';
-          const lineNumber = i + 1; // Line number starts from 1
-
-          if (line1 !== line2) {
-            isDifferent = true;
-            if (firstDifferenceLine === null) {
-              firstDifferenceLine = lineNumber;
-            }
-            const { highlightedLine1, highlightedLine2 } = highlightDifferences(line1, line2);
-            highlightedText1 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
-            highlightedText1 += `<span> ${highlightedLine1 + '\n'}</span>`
-            highlightedText2 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
-            highlightedText2 += `<span> ${highlightedLine2 + '\n'}</span>`
+          if (typeof hash2[lines1[i]] === 'number') {
+            newLines2.push(lines1[i]);
           } else {
-            highlightedText1 += lineNumber + ': ' + escapeHtml(line1) + '\n';
-            highlightedText2 += lineNumber + ': ' + escapeHtml(line2) + '\n';
+            newLines2.push('');
           }
-        }
-
-        text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
-        text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
-
-        text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
-        text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
-
-        console.log(text1Div.clientHeight)
-        console.log(text1Div.scrollHeight)
-        text1Div.style.height = text1Div.scrollHeight + 'px';
-        text2Div.style.height = text2Div.scrollHeight + 'px';
-
-        text1Div.contentEditable = 'false';
-        text2Div.contentEditable = 'false';
-
-        if (isDifferent) {
-          document.getElementById('arrow-down').style.color = '#4141c9'; // Show the arrow
-          document.getElementById('arrow-down').addEventListener('click', function() {
-            const firstDifferenceElement = document.getElementById(`line-${firstDifferenceLine}`);
-            if (firstDifferenceElement) {
-              firstDifferenceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          });
-        } else {
-          messageDiv.textContent = 'The texts are the same.';
         }
       }
+      if (lines1.length < lines2.length) {
+        for (let i = 0; i < lines2.length; i++) {
+          newLines2.push(lines2[i]);
+
+          if (typeof hash1[lines2[i]] === 'number') {
+            newLines1.push(lines2[i]);
+          } else {
+            newLines1.push('');
+          }
+        }
+      }
+      if (lines1.length === lines2.length) {
+        for (let i = 0; i < lines1.length; i++) {
+          newLines1.push(lines1[i]);
+          newLines2.push(lines2[i]);
+        }
+      }
+
+      for (let i = 0; i < maxLength; i++) {
+        const line1 = newLines1[i] || '';
+        const line2 = newLines2[i] || '';
+        const lineNumber = i + 1; // Line number starts from 1
+
+        if (line1 !== line2) {
+          isDifferent = true;
+          if (firstDifferenceLine === null) {
+            firstDifferenceLine = lineNumber;
+          }
+          const { highlightedLine1, highlightedLine2 } = highlightDifferences(line1, line2);
+          highlightedText1 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
+          highlightedText1 += `<span> ${highlightedLine1 + '\n'}</span>`
+          highlightedText2 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
+          highlightedText2 += `<span> ${highlightedLine2 + '\n'}</span>`
+        } else {
+          highlightedText1 += lineNumber + ': ' + escapeHtml(line1) + '\n';
+          highlightedText2 += lineNumber + ': ' + escapeHtml(line2) + '\n';
+        }
+      }
+
+      text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
+      text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
+
+      text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
+      text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
+
+      console.log(text1Div.clientHeight)
+      console.log(text1Div.scrollHeight)
+      text1Div.style.height = text1Div.scrollHeight + 'px';
+      text2Div.style.height = text2Div.scrollHeight + 'px';
+
+      text1Div.contentEditable = 'false';
+      text2Div.contentEditable = 'false';
+
+      if (isDifferent) {
+        document.getElementById('arrow-down').style.color = '#4141c9'; // Show the arrow
+        document.getElementById('arrow-down').addEventListener('click', function() {
+          const firstDifferenceElement = document.getElementById(`line-${firstDifferenceLine}`);
+          if (firstDifferenceElement) {
+            firstDifferenceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      } else {
+        messageDiv.textContent = 'The texts are the same.';
+      }
+
+      // Show Clear All button after comparison
+      document.getElementById('clear-all-btn').style.display = 'block';
+    }
+
+    function clearAll() {
+      const text1Div = document.getElementById('text1');
+      const text2Div = document.getElementById('text2');
+      const messageDiv = document.getElementById('message-div');
+      const originalText1Input = document.getElementById('original-text1');
+      const originalText2Input = document.getElementById('original-text2');
+      const arrowDown = document.getElementById('arrow-down');
+
+      // Clear text fields
+      text1Div.innerHTML = '';
+      text2Div.innerHTML = '';
+
+      // Clear original texts
+      originalText1Input.value = '';
+      originalText2Input.value = '';
+
+      // Clear message
+      messageDiv.textContent = '';
+
+      // Hide original texts container
+      document.getElementById('original-texts-container').style.display = 'none';
+
+      // Reset contentEditable
+      text1Div.contentEditable = 'true';
+      text2Div.contentEditable = 'true';
+
+      // Reset height
+      text1Div.style.height = '';
+      text2Div.style.height = '';
+
+      // Reset arrow color
+      arrowDown.style.color = '';
+
+      // Hide Clear All button
+      document.getElementById('clear-all-btn').style.display = 'none';
+    }
   </script>
 
   <footer>
