@@ -4,79 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Text Comparison</title>
-  <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-      }
-      .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        position: relative;
-      }
-      .compare-texts {
-        text-align: center;
-      }
-      .highlight {
-        background-color: #4141c9;
-        color: white;
-      }
-      .text-container {
-        display: flex;
-        width: 100%;
-      }
-      .editable {
-        width: 100%;
-        height: 350px;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin: 10px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        background-color: white;
-        color: black;
-        font-family: monospace;
-        border-radius: 10px;
-      }
-      .editable:focus {
-        outline: none;
-      }
-      #text1[data-placeholder-1]:empty:before {
-        content: attr(data-placeholder-1);
-        color: #aaa;
-        pointer-events: none;
-      }
-      #text2[data-placeholder-2]:empty:before {
-        content: attr(data-placeholder-2);
-        color: #aaa;
-        pointer-events: none;
-      }
-      .button-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-      }
-      button {
-        margin-top: 20px;
-        margin-bottom: 20px;
-        background-color: #4141c9;
-        color: white;
-        border-radius: 10px;
-        padding: 10px 20px;
-        border: none;
-        cursor: pointer;
-      }
-      .arrow-down {
-        cursor: pointer;
-        color: white;
-        font-size: 24px;
-        width: 15px;
-      }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -89,6 +17,11 @@
       <div id="text1" class="editable" contenteditable="true" data-placeholder-1="Insert a version of the text here."></div>
       <a id="arrow-down" class="arrow-down">&#x2193;</a>
       <div id="text2" class="editable" contenteditable="true" data-placeholder-2="Insert another version of the text here."></div>
+    </div>
+    <div id="original-texts-container" class="original-texts-container" style="display: none;">
+      <textarea id="original-text1" class="original-text" readonly></textarea>
+      <div class="spacer"></div>
+      <textarea id="original-text2" class="original-text" readonly></textarea>
     </div>
   </div>
 
@@ -179,6 +112,11 @@
         const text1 = text1Div.innerText;
         const text2 = text2Div.innerText;
 
+        // Store original texts in the inputs
+        document.getElementById('original-text1').value = text1;
+        document.getElementById('original-text2').value = text2;
+        document.getElementById('original-texts-container').style.display = 'flex';
+
         const lines1 = text1.split('\n');
         const lines2 = text2.split('\n');
         const newLines1 = []
@@ -262,16 +200,6 @@
 
         text1Div.contentEditable = 'false';
         text2Div.contentEditable = 'false';
-
-        // const originalTextDiv = document.createElement('div');
-        // originalTextDiv.innerHTML = `
-        //   <h3>Original Texts</h3>
-        //   <p>Text 1:</p>
-        //   <pre>${escapeHtml(lines1.join('\n'))}</pre>
-        //   <p>Text 2:</p>
-        //   <pre>${escapeHtml(lines2.join('\n'))}</pre>
-        // `;
-        // document.body.appendChild(originalTextDiv);
 
         if (isDifferent) {
           document.getElementById('arrow-down').style.color = '#4141c9'; // Show the arrow
