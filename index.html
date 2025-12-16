@@ -23,7 +23,9 @@
       <div class="spacer"></div>
       <textarea id="original-text2" class="original-text"></textarea>
     </div>
-    <button id="clear-all-btn" onclick="clearAll()" style="display: none;">Clear All</button>
+    <div class="bottom-buttons">
+      <button id="clear-all-btn" onclick="clearAll()" style="display: none;">Clear All</button>
+    </div>
   </div>
 
   <script>
@@ -117,6 +119,11 @@
       const text2 = originalText2Input.value || text2Div.innerText;
       messageDiv.textContent = ''; // Clear previous messages
 
+      // Do nothing if both texts are empty
+      if (!text1.trim() && !text2.trim()) {
+        return;
+      }
+
       if (!originalText1Input.value) {
         originalText1Input.value = text1;
       }
@@ -201,8 +208,6 @@
       text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
       text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
 
-      console.log(text1Div.clientHeight)
-      console.log(text1Div.scrollHeight)
       text1Div.style.height = text1Div.scrollHeight + 'px';
       text2Div.style.height = text2Div.scrollHeight + 'px';
 
