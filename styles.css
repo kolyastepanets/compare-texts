@@ -72,6 +72,15 @@ button {
   border: none;
   cursor: pointer;
 }
+.bottom-buttons {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+#clear-all-btn {
+  margin-left: auto;
+}
 .arrow-down {
   cursor: pointer;
   color: white;
