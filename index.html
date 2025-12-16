@@ -3,14 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Text Comparison</title>
+
+  <!-- Primary Meta Tags -->
+  <title>Compare Texts Online - Free Text Comparison Tool | Find Text Differences</title>
+  <meta name="title" content="Compare Texts Online - Free Text Comparison Tool | Find Text Differences">
+  <meta name="description" content="Free online text comparison tool. Compare two text versions instantly and highlight differences. Privacy-focused, no data sent to servers. Perfect for document comparison, code review, and content editing.">
+  <meta name="keywords" content="compare texts, text comparison, diff checker, text difference finder, compare documents, side by side comparison, text compare online, free text comparison tool">
+  <meta name="author" content="Compare Texts">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://compare-texts.online/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://compare-texts.online/">
+  <meta property="og:title" content="Compare Texts Online - Free Text Comparison Tool">
+  <meta property="og:description" content="Compare two text versions instantly and highlight differences. Privacy-focused tool with no server-side processing.">
+  <meta property="og:image" content="https://compare-texts.online/og-image.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="Compare Texts">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://compare-texts.online/">
+  <meta name="twitter:title" content="Compare Texts Online - Free Text Comparison Tool">
+  <meta name="twitter:description" content="Compare two text versions instantly and highlight differences. Privacy-focused tool with no server-side processing.">
+  <meta name="twitter:image" content="https://compare-texts.online/twitter-image.png">
+
+  <!-- Structured Data / Schema.org -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Compare Texts",
+    "url": "https://compare-texts.online",
+    "description": "Free online text comparison tool to compare two text versions and highlight differences instantly",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Privacy-focused comparison",
+      "Real-time text difference detection",
+      "Side-by-side text comparison",
+      "Visual highlighting of differences",
+      "No server-side processing"
+    ],
+    "browserRequirements": "Requires JavaScript. Requires HTML5."
+  }
+  </script>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1 class="compare-texts">Compare Texts</h1>
+  <div class="wrapper">
+    <main role="main">
+      <div class="container">
+        <h1 class="compare-texts">Compare Texts</h1>
     <div class="button-container">
-      <button onclick="compareTexts()">Compare</button>
+      <button onclick="compareTexts()" aria-label="Compare the two text versions">Compare</button>
     </div>
     <div id="message-div"></div>
     <div class="text-container">
@@ -267,17 +320,19 @@
       document.getElementById('clear-all-btn').style.display = 'none';
     }
   </script>
-
-  <footer>
-    <div class="footer-content">
-      <div class="footer-links">
-        <a href="about.html">About</a>
-        <span class="footer-separator">•</span>
-        <a href="https://github.com/kolyastepanets/compare-texts" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </main>
+    
+    <footer>
+      <div class="footer-content">
+        <div class="footer-links">
+          <a href="about.html">About</a>
+          <span class="footer-separator">•</span>
+          <a href="https://github.com/kolyastepanets/compare-texts" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+        <p class="footer-text">Made with ❤️ for developers, writers, and anyone who needs to compare texts</p>
       </div>
-      <p class="footer-text">Made with ❤️ for developers, writers, and anyone who needs to compare texts</p>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
 </body>
 </html>
