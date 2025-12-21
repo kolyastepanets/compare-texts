@@ -1,0 +1,35 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 32 32"
+  width="32"
+  height="32"
+>
+  <!-- Background -->
+  <rect
+    width="32"
+    height="32"
+    rx="8"
+    fill="#0F172A"
+  />
+
+  <!-- Center divider -->
+  <line
+    x1="16"
+    y1="6"
+    x2="16"
+    y2="26"
+    stroke="#475569"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+
+  <!-- Left column -->
+  <rect x="4" y="7"  width="10" height="4" rx="2" fill="#94A3B8"/>
+  <rect x="4" y="14" width="10" height="4" rx="2" fill="#94A3B8"/>
+  <rect x="4" y="21" width="10" height="4" rx="2" fill="#94A3B8"/>
+
+  <!-- Right column -->
+  <rect x="18" y="7"  width="10" height="4" rx="2" fill="#EF4444"/>
+  <rect x="18" y="14" width="10" height="4" rx="2" fill="#64748B"/>
+  <rect x="18" y="21" width="10" height="4" rx="2" fill="#22C55E"/>
+</svg>
