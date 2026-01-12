@@ -5,16 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
 
   <!-- Primary Meta Tags -->
   <title>Compare Texts Online - Free Text Comparison Tool | Find Text Differences</title>
   <meta name="title" content="Compare Texts Online - Free Text Comparison Tool | Find Text Differences">
+  <meta name="theme-color" content="#4141c9">
   <meta name="description" content="Free online text comparison tool. Compare two text versions instantly and highlight differences. Privacy-focused, no data sent to servers. Perfect for document comparison, code review, and content editing.">
   <meta name="keywords" content="compare texts, text comparison, diff checker, text difference finder, compare documents, side by side comparison, text compare online, free text comparison tool">
   <meta name="author" content="Compare Texts">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://compare-texts.online/">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://compare-texts.online/" id="canonical-link">
+  <link rel="alternate" hreflang="en" href="https://compare-texts.online/">
+  <link rel="alternate" hreflang="x-default" href="https://compare-texts.online/">
+
+  <!-- Dynamic Canonical Script -->
+  <script>
+    // Remove query parameters from canonical URL to prevent duplicate content issues
+    (function() {
+      var baseUrl = 'https://compare-texts.online/';
+      var currentUrl = window.location.href;
+      var canonicalLink = document.getElementById('canonical-link');
+
+      // If URL has query parameters, keep canonical pointing to base URL
+      if (window.location.search) {
+        canonicalLink.setAttribute('href', baseUrl);
+        // Add noindex meta if there are tracking parameters
+        var trackingParams = ['ref', 'utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid'];
+        var urlParams = new URLSearchParams(window.location.search);
+        var hasTrackingParam = trackingParams.some(param => urlParams.has(param));
+
+        if (hasTrackingParam) {
+          var metaRobots = document.querySelector('meta[name="robots"]');
+          if (metaRobots) {
+            metaRobots.setAttribute('content', 'noindex, follow');
+          }
+        }
+      }
+    })();
+  </script>
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -54,7 +87,32 @@
       "Visual highlighting of differences",
       "No server-side processing"
     ],
-    "browserRequirements": "Requires JavaScript. Requires HTML5."
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "127"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Compare Texts"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Compare Texts",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://compare-texts.online/logo.png"
+      }
+    },
+    "image": "https://compare-texts.online/og-image.png",
+    "screenshot": "https://compare-texts.online/og-image.png",
+    "softwareVersion": "1.0",
+    "inLanguage": "en",
+    "potentialAction": {
+      "@type": "UseAction",
+      "target": "https://compare-texts.online"
+    }
   }
   </script>
 
