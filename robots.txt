@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /assets/
 Disallow: /*.json$
+Disallow: /*?*ref=*
+Disallow: /*?*utm_*
 
 Sitemap: https://compare-texts.online/sitemap.xml
