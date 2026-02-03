@@ -248,8 +248,8 @@
 
       const lines1 = text1.split('\n');
       const lines2 = text2.split('\n');
-      const newLines1 = []
-      const newLines2 = []
+      const newLines1 = [];
+      const newLines2 = [];
 
       let highlightedText1 = '';
       let highlightedText2 = '';
@@ -257,42 +257,69 @@
       let firstDifferenceLine = null;
       const maxLength = Math.max(lines1.length, lines2.length);
 
-      const hash1 = {};
-      const hash2 = {};
-      for (let i = 0; i < lines1.length; i++) {
-        hash1[lines1[i]] = i;
-      }
-      for (let i = 0; i < lines2.length; i++) {
-        hash2[lines2[i]] = i;
-      }
+      // Align lines using edit distance to keep substitutions on the same line.
+      function alignLines(a, b) {
+        const rows = a.length + 1;
+        const cols = b.length + 1;
+        const dp = Array(rows)
+          .fill(null)
+          .map(() => Array(cols).fill(0));
 
-      if (lines1.length > lines2.length) {
-        for (let i = 0; i < lines1.length; i++) {
-          newLines1.push(lines1[i]);
+        for (let i = 0; i < rows; i++) {
+          dp[i][0] = i;
+        }
+        for (let j = 0; j < cols; j++) {
+          dp[0][j] = j;
+        }
 
-          if (typeof hash2[lines1[i]] === 'number') {
-            newLines2.push(lines1[i]);
-          } else {
-            newLines2.push('');
+        for (let i = 1; i < rows; i++) {
+          for (let j = 1; j < cols; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(
+              dp[i - 1][j] + 1, // delete
+              dp[i][j - 1] + 1, // insert
+              dp[i - 1][j - 1] + cost // substitute/match
+            );
           }
         }
-      }
-      if (lines1.length < lines2.length) {
-        for (let i = 0; i < lines2.length; i++) {
-          newLines2.push(lines2[i]);
 
-          if (typeof hash1[lines2[i]] === 'number') {
-            newLines1.push(lines2[i]);
+        const alignedA = [];
+        const alignedB = [];
+        let i = a.length;
+        let j = b.length;
+
+        while (i > 0 || j > 0) {
+          if (i > 0 && j > 0) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            if (dp[i][j] === dp[i - 1][j - 1] + cost) {
+              alignedA.push(a[i - 1]);
+              alignedB.push(b[j - 1]);
+              i--;
+              j--;
+              continue;
+            }
+          }
+          if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+            alignedA.push(a[i - 1]);
+            alignedB.push('');
+            i--;
           } else {
-            newLines1.push('');
+            alignedA.push('');
+            alignedB.push(b[j - 1]);
+            j--;
           }
         }
+
+        alignedA.reverse();
+        alignedB.reverse();
+        return { alignedA, alignedB };
       }
-      if (lines1.length === lines2.length) {
-        for (let i = 0; i < lines1.length; i++) {
-          newLines1.push(lines1[i]);
-          newLines2.push(lines2[i]);
-        }
+
+      const aligned = alignLines(lines1, lines2);
+      const alignedLength = Math.max(aligned.alignedA.length, aligned.alignedB.length);
+      for (let i = 0; i < alignedLength; i++) {
+        newLines1.push(aligned.alignedA[i] || '');
+        newLines2.push(aligned.alignedB[i] || '');
       }
 
       for (let i = 0; i < maxLength; i++) {
