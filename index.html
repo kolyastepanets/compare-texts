@@ -63,7 +63,7 @@
   <meta name="twitter:url" content="https://compare-texts.online/">
   <meta name="twitter:title" content="Compare Texts Online - Free Text Comparison Tool">
   <meta name="twitter:description" content="Compare two text versions instantly and highlight differences. Privacy-focused tool with no server-side processing.">
-  <meta name="twitter:image" content="https://compare-texts.online/twitter-image.png">
+  <meta name="twitter:image" content="https://compare-texts.online/og-image.png">
 
   <!-- Structured Data / Schema.org -->
   <script type="application/ld+json">
@@ -88,11 +88,6 @@
       "No server-side processing"
     ],
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "127"
-    },
     "author": {
       "@type": "Organization",
       "name": "Compare Texts"
@@ -143,16 +138,27 @@
   </div>
 
   <script>
-    document.getElementById('text1').addEventListener('paste', function(e) {
-      e.preventDefault();
-      var text = (e.clipboardData || window.clipboardData).getData('text');
-      document.execCommand('insertText', false, text);
-    });
-
-    document.getElementById('text2').addEventListener('paste', function(e) {
-      e.preventDefault();
-      var text = (e.clipboardData || window.clipboardData).getData('text');
-      document.execCommand('insertText', false, text);
+    ['text1', 'text2'].forEach(function(id) {
+      var editable = document.getElementById(id);
+      editable.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var text = (e.clipboardData || window.clipboardData).getData('text');
+        // execCommand('insertText') runs large pastes through the editing/undo
+        // pipeline and can freeze the tab; insert a single text node instead.
+        var selection = window.getSelection();
+        if (selection.rangeCount > 0 && editable.contains(selection.anchorNode)) {
+          var range = selection.getRangeAt(0);
+          range.deleteContents();
+          var node = document.createTextNode(text);
+          range.insertNode(node);
+          range.setStartAfter(node);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          editable.appendChild(document.createTextNode(text));
+        }
+      });
     });
 
     function escapeHtml(text) {
@@ -195,31 +201,77 @@
         return lcs;
       }
 
-      const lcs = findLCS(line1, line2);
-      let highlightedLine1 = '';
-      let highlightedLine2 = '';
+      // Trim the common prefix/suffix so the O(n*m) LCS only runs on the
+      // changed core of the line, not the whole line.
+      let prefix = 0;
+      const minLength = Math.min(line1.length, line2.length);
+      while (prefix < minLength && line1[prefix] === line2[prefix]) prefix++;
+      let end1 = line1.length;
+      let end2 = line2.length;
+      while (end1 > prefix && end2 > prefix && line1[end1 - 1] === line2[end2 - 1]) {
+        end1--;
+        end2--;
+      }
+      const core1 = line1.slice(prefix, end1);
+      const core2 = line2.slice(prefix, end2);
+      const head = escapeHtml(line1.slice(0, prefix));
+      const tail = escapeHtml(line1.slice(end1));
+
+      // The changed region is too large for a character-level diff —
+      // highlight it as a whole instead of freezing the tab.
+      if (core1.length * core2.length > 1000000) {
+        const wrap = (core) => core ? `<span class="highlight">${escapeHtml(core)}</span>` : '';
+        return {
+          highlightedLine1: head + wrap(core1) + tail,
+          highlightedLine2: head + wrap(core2) + tail
+        };
+      }
+
+      const lcs = findLCS(core1, core2);
+      let highlightedLine1 = head;
+      let highlightedLine2 = head;
+      let run1 = '';
+      let run2 = '';
       let i = 0, j = 0, k = 0;
 
-      while (i < line1.length || j < line2.length) {
-        if (k < lcs.length && line1[i] === lcs[k] && line2[j] === lcs[k]) {
-          highlightedLine1 += escapeHtml(line1[i]);
-          highlightedLine2 += escapeHtml(line2[j]);
+      // Buffer consecutive changed characters so each run becomes one span
+      // instead of a span per character.
+      function flushRuns() {
+        if (run1) {
+          highlightedLine1 += `<span class="highlight">${escapeHtml(run1)}</span>`;
+          run1 = '';
+        }
+        if (run2) {
+          highlightedLine2 += `<span class="highlight">${escapeHtml(run2)}</span>`;
+          run2 = '';
+        }
+      }
+
+      while (i < core1.length || j < core2.length) {
+        if (k < lcs.length && core1[i] === lcs[k] && core2[j] === lcs[k]) {
+          flushRuns();
+          highlightedLine1 += escapeHtml(core1[i]);
+          highlightedLine2 += escapeHtml(core2[j]);
           i++;
           j++;
           k++;
         } else {
-          if (i < line1.length && (k >= lcs.length || line1[i] !== lcs[k])) {
-            highlightedLine1 += `<span class="highlight">${escapeHtml(line1[i])}</span>`;
+          if (i < core1.length && (k >= lcs.length || core1[i] !== lcs[k])) {
+            run1 += core1[i];
             i++;
           }
-          if (j < line2.length && (k >= lcs.length || line2[j] !== lcs[k])) {
-            highlightedLine2 += `<span class="highlight">${escapeHtml(line2[j])}</span>`;
+          if (j < core2.length && (k >= lcs.length || core2[j] !== lcs[k])) {
+            run2 += core2[j];
             j++;
           }
         }
       }
+      flushRuns();
 
-      return { highlightedLine1, highlightedLine2 };
+      return {
+        highlightedLine1: highlightedLine1 + tail,
+        highlightedLine2: highlightedLine2 + tail
+      };
     }
 
     function compareTexts() {
@@ -255,10 +307,39 @@
       let highlightedText2 = '';
       let isDifferent = false;
       let firstDifferenceLine = null;
-      const maxLength = Math.max(lines1.length, lines2.length);
 
       // Align lines using edit distance to keep substitutions on the same line.
-      function alignLines(a, b) {
+      function alignLines(fullA, fullB) {
+        // Trim common prefix/suffix lines first — the DP below is
+        // O(a.length * b.length) in time and memory.
+        let prefix = 0;
+        const minLength = Math.min(fullA.length, fullB.length);
+        while (prefix < minLength && fullA[prefix] === fullB[prefix]) prefix++;
+        let endA = fullA.length;
+        let endB = fullB.length;
+        while (endA > prefix && endB > prefix && fullA[endA - 1] === fullB[endB - 1]) {
+          endA--;
+          endB--;
+        }
+        const a = fullA.slice(prefix, endA);
+        const b = fullB.slice(prefix, endB);
+
+        // Too many changed lines to align optimally — pair them up as-is
+        // instead of building a huge DP matrix.
+        if (a.length * b.length > 4000000) {
+          const coreLength = Math.max(a.length, b.length);
+          const pairedA = [];
+          const pairedB = [];
+          for (let i = 0; i < coreLength; i++) {
+            pairedA.push(i < a.length ? a[i] : '');
+            pairedB.push(i < b.length ? b[i] : '');
+          }
+          return {
+            alignedA: fullA.slice(0, prefix).concat(pairedA, fullA.slice(endA)),
+            alignedB: fullB.slice(0, prefix).concat(pairedB, fullB.slice(endB))
+          };
+        }
+
         const rows = a.length + 1;
         const cols = b.length + 1;
         const dp = Array(rows)
@@ -312,7 +393,10 @@
 
         alignedA.reverse();
         alignedB.reverse();
-        return { alignedA, alignedB };
+        return {
+          alignedA: fullA.slice(0, prefix).concat(alignedA, fullA.slice(endA)),
+          alignedB: fullB.slice(0, prefix).concat(alignedB, fullB.slice(endB))
+        };
       }
 
       const aligned = alignLines(lines1, lines2);
@@ -322,7 +406,7 @@
         newLines2.push(aligned.alignedB[i] || '');
       }
 
-      for (let i = 0; i < maxLength; i++) {
+      for (let i = 0; i < alignedLength; i++) {
         const line1 = newLines1[i] || '';
         const line2 = newLines2[i] || '';
         const lineNumber = i + 1; // Line number starts from 1
@@ -333,18 +417,15 @@
             firstDifferenceLine = lineNumber;
           }
           const { highlightedLine1, highlightedLine2 } = highlightDifferences(line1, line2);
-          highlightedText1 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
+          highlightedText1 += `<span id="line-left-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
           highlightedText1 += `<span> ${highlightedLine1 + '\n'}</span>`
-          highlightedText2 += `<span id="line-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
+          highlightedText2 += `<span id="line-right-${lineNumber}" class="highlight">${lineNumber}</span>` + ': ';
           highlightedText2 += `<span> ${highlightedLine2 + '\n'}</span>`
         } else {
           highlightedText1 += lineNumber + ': ' + escapeHtml(line1) + '\n';
           highlightedText2 += lineNumber + ': ' + escapeHtml(line2) + '\n';
         }
       }
-
-      text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
-      text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
 
       text1Div.innerHTML = highlightedText1.replace(/\n/g, '<br>');
       text2Div.innerHTML = highlightedText2.replace(/\n/g, '<br>');
@@ -356,13 +437,16 @@
       text2Div.contentEditable = 'false';
 
       if (isDifferent) {
-        document.getElementById('arrow-down').style.color = '#4141c9'; // Show the arrow
-        document.getElementById('arrow-down').addEventListener('click', function() {
-          const firstDifferenceElement = document.getElementById(`line-${firstDifferenceLine}`);
+        const arrowDown = document.getElementById('arrow-down');
+        arrowDown.style.color = '#4141c9'; // Show the arrow
+        // Assign (not addEventListener) so repeated comparisons don't stack
+        // listeners pointing at stale line numbers.
+        arrowDown.onclick = function() {
+          const firstDifferenceElement = document.getElementById(`line-left-${firstDifferenceLine}`);
           if (firstDifferenceElement) {
             firstDifferenceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
-        });
+        };
       } else {
         messageDiv.textContent = 'The texts are the same.';
       }
@@ -401,8 +485,9 @@
       text1Div.style.height = '';
       text2Div.style.height = '';
 
-      // Reset arrow color
+      // Reset arrow color and detach the jump handler
       arrowDown.style.color = '';
+      arrowDown.onclick = null;
 
       // Hide Clear All button
       document.getElementById('clear-all-btn').style.display = 'none';
